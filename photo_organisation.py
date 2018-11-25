@@ -12,16 +12,38 @@
 ##############################################################################
 
 
+
+
 import os, shutil, subprocess, csv, re
+
+
+#------------------------------------------------------------------------------
+#       Folder & file paths
+#------------------------------------------------------------------------------
+
+src_dir='/home/charl/TempSynoMount/TestPhotosOriginal'
+
+album_file_path='home/charl/TempSynoMount/TestAlbumStructure.csv'
+
+target_dir_root='/home/charl/TempSynoMount/TestPhotoAlbums/'
+
+target_small_compressed_dir_root=('/home/charl/TempSynoMount/'
+                                  'TestPhotoAlbumsSmall/')
+
+target_medium_compressed_dir_root=('/home/charl/TempSynoMount/'
+                                   'TestPhotoAlbumsMedium/')
+
+
+#------------------------------------------------------------------------------
+#      Other constants 
+#------------------------------------------------------------------------------
 
 SMALL_MAX_ALLOWED_LENGTH = 1000
 MEDIUM_MAX_ALLOWED_LENGTH = 2048
 
-src_dir='/srv/samba/Pictures/020_All_Photos'
-album_file_path='/srv/samba/Pictures/0_AlbumStructures/photo_album_details.csv'
-target_dir_root='/srv/samba/Pictures/010_PhotoAlbums'
-target_small_compressed_dir_root='/srv/samba/Pictures/011_PhotoAlbumsCompressedSmall'
-target_medium_compressed_dir_root='/srv/samba/Pictures/012_PhotoAlbumsCompressedMedium'
+
+
+
 
 def create_csv():
     """ creates csv file containing album structure"""
