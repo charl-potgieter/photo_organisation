@@ -21,9 +21,9 @@ import os, shutil, subprocess, csv, re
 #       Folder & file paths
 #------------------------------------------------------------------------------
 
-src_dir='/home/charl/TempSynoMount/TestPhotosOriginal'
+src_dir='/home/charl/TempSynoMount/TestPhotosOriginal/'
 
-album_file_path='home/charl/TempSynoMount/TestAlbumStructure.csv'
+album_file_path='/home/charl/TempSynoMount/TestAlbumStructure.csv'
 
 target_dir_root='/home/charl/TempSynoMount/TestPhotoAlbums/'
 
@@ -50,7 +50,11 @@ def create_csv():
 
     with open(album_file_path, 'w', newline='') as album_file:
         album_writer = csv.writer(album_file)
-        album_writer.writerow(['source_file', 'album_tag', 'target_file', 'target_file_compressed_small', 'target_file_compressed_medium'])
+        album_writer.writerow([
+                                'source_file', 'album_tag', 'target_file', 
+                                'target_file_compressed_small', 
+                                'target_file_compressed_medium'
+                              ])
 
         album_writer=csv.writer(album_file)
 
@@ -58,11 +62,17 @@ def create_csv():
             print('processing ', rootdir, '...')
             for fname in fnames:
 
-                #read iptc image tag with exiv2 command line function and pipe the std output
-                #use Popen rather than run as can more easily interact with stdout using Popen.commnuicate as below
-                #which automatically waits for the child process ot finish before continuing with the python code
+                # Read iptc image tag with exiv2 command line function and pipe
+                # The std output. Use Popen rather than run as can more easily
+                # interact with stdout using Popen.commnuicate as below which 
+                # automatically waits for e child process ot finish before
+                # continuing with the python code
                 fname_full=os.path.join(rootdir, fname)
-                proc=subprocess.Popen(['exiv2', '-p', 'i', fname_full], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                proc=subprocess.Popen(
+                                     ['exiv2', '-p', 'i', fname_full],
+                                     stdout=subprocess.PIPE, 
+                                     stderr=subprocess.PIPE
+                                    )
 
                 #read piped data above into byte/binary variable and convert output to a standard string
                 outs,errs = proc.communicate()
