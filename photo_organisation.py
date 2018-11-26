@@ -28,7 +28,7 @@ album_file_path='/home/charl/TempSynoMount/TestAlbumStructure.csv'
 target_dir_root='/home/charl/TempSynoMount/TestPhotoAlbums/'
 
 target_small_compressed_dir_root=('/home/charl/TempSynoMount/'
-                                  'TestPhotoAlbumsSmall/')
+                                   'TestPhotoAlbumsSmall/')
 
 target_medium_compressed_dir_root=('/home/charl/TempSynoMount/'
                                    'TestPhotoAlbumsMedium/')
@@ -74,7 +74,8 @@ def create_csv():
                                      stderr=subprocess.PIPE
                                     )
 
-                #read piped data above into byte/binary variable and convert output to a standard string
+                # read piped data above into byte/binary variable and convert 
+                # output to a standard string
                 outs,errs = proc.communicate()
                 output_str=outs.decode(encoding="utf-8", errors="ignore")
                 
@@ -83,10 +84,28 @@ def create_csv():
 
                 #write source file name, tag and target and compressed target to csv file
                 for album_tag in album_tags:
-                    target_file = target_dir_root + os.sep + re.sub('^album_[a-zA-Z0-9]*_', '', album_tag) + os.sep + fname
-                    target_file_compressed_small = target_file.replace(target_dir_root, target_small_compressed_dir_root)
-                    target_file_compressed_medium = target_file.replace(target_dir_root, target_medium_compressed_dir_root)
-                    album_writer.writerow([fname_full, album_tag, target_file, target_file_compressed_small, target_file_compressed_medium])
+
+                    target_file = (target_dir_root + os.sep 
+                                + re.sub('^album_[a-zA-Z0-9]*_', '', album_tag)
+                                + os.sep + fname)
+
+                    target_file_compressed_small = target_file.replace(
+                                            target_dir_root,
+                                            target_small_compressed_dir_root
+                                            )
+
+                    target_file_compressed_medium = target_file.replace(
+                                            target_dir_root, 
+                                            target_medium_compressed_dir_root
+                                            )
+
+                    album_writer.writerow([
+                                            fname_full, 
+                                            album_tag, 
+                                            target_file, 
+                                            target_file_compressed_small, 
+                                            target_file_compressed_medium
+                                          ])
 
 
 def copy_images():
