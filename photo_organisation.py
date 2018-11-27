@@ -2,12 +2,12 @@
 #
 #       Organsises photo albums:
 #       (1) Creates csv file of images tagged album_*
-#       (2) Copys these images to album target directory in uncompressed and
+#       (2) Copies these images to album target directory in uncompressed and
 #            compressed forms
 #       (3) Deletes any other files in this directory that aren't the
 #           tagged images
 #
-#       REQUIRES EXIV2, RCLONE AND IMAGEMAGICK TO BE INSTALLED ON SYSTEM       
+#       REQUIRES LIBIPTCDATA, RCLONE AND IMAGEMAGICK TO BE INSTALLED ON SYSTEM       
 #
 ##############################################################################
 
@@ -21,17 +21,17 @@ import os, shutil, subprocess, csv, re
 #       Folder & file paths
 #------------------------------------------------------------------------------
 
-src_dir='/home/charl/TempSynoMount/TestPhotosOriginal/'
+src_dir='/home/charl/TempSynoMount/TestPhotosOriginal'
 
 album_file_path='/home/charl/TempSynoMount/TestAlbumStructure.csv'
 
-target_dir_root='/home/charl/TempSynoMount/TestPhotoAlbums/'
+target_dir_root='/home/charl/TempSynoMount/TestPhotoAlbums'
 
 target_small_compressed_dir_root=('/home/charl/TempSynoMount/'
-                                   'TestPhotoAlbumsSmall/')
+                                   'TestPhotoAlbumsSmall')
 
 target_medium_compressed_dir_root=('/home/charl/TempSynoMount/'
-                                   'TestPhotoAlbumsMedium/')
+                                   'TestPhotoAlbumsMedium')
 
 
 #------------------------------------------------------------------------------
@@ -40,6 +40,8 @@ target_medium_compressed_dir_root=('/home/charl/TempSynoMount/'
 
 SMALL_MAX_ALLOWED_LENGTH = 1000
 MEDIUM_MAX_ALLOWED_LENGTH = 2048
+
+
 
 
 
@@ -62,14 +64,14 @@ def create_csv():
             print('processing ', rootdir, '...')
             for fname in fnames:
 
-                # Read iptc image tag with exiv2 command line function and pipe
+                # Read iptc image tag with ptc command line function and pipe
                 # The std output. Use Popen rather than run as can more easily
                 # interact with stdout using Popen.commnuicate as below which 
                 # automatically waits for e child process ot finish before
                 # continuing with the python code
                 fname_full=os.path.join(rootdir, fname)
                 proc=subprocess.Popen(
-                                     ['exiv2', '-p', 'i', fname_full],
+                                     ['iptc', '--print=Keywords', fname_full],
                                      stdout=subprocess.PIPE, 
                                      stderr=subprocess.PIPE
                                     )
@@ -82,7 +84,8 @@ def create_csv():
                 #Extract all album tags using regular expression
                 album_tags=re.findall('[^ ]*album_[^ \n]*', output_str)
 
-                #write source file name, tag and target and compressed target to csv file
+                #write source file name, tag and target and compressed target 
+                #to csv file
                 for album_tag in album_tags:
 
                     target_file = (target_dir_root + os.sep 
@@ -119,7 +122,7 @@ def copy_images():
 
         for row in album_reader:
 
-            # ************Create copies of images in uncompressed album *********
+            # Create copies of images in uncompressed album
             target_file=row['target_file']
             if not os.path.isfile(target_file):
                 print('copying ', target_file)
@@ -128,7 +131,7 @@ def copy_images():
                 shutil.copy2(row['source_file'], target_file)
 
 
-            # ********* Create copies of images in small compressed album ******
+            # Create copies of images in small compressed album
             target_file=row['target_file_compressed_small']
             if not os.path.isfile(target_file):
                 print('copying ', target_file)
@@ -240,4 +243,4 @@ if __name__ == "__main__":
     create_csv()
     copy_images()
     delete_non_album_files()
-  #  send_to_dropbox()
+    # send_to_dropbox()
