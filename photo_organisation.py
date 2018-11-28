@@ -14,7 +14,7 @@
 
 
 
-import os, shutil, subprocess, csv, re
+import os, shutil, subprocess, csv, re, time
 
 
 #------------------------------------------------------------------------------
@@ -22,6 +22,7 @@ import os, shutil, subprocess, csv, re
 #------------------------------------------------------------------------------
 
 src_dir='/home/charl/TempSynoMount/TestPhotosOriginal'
+# src_dir='/home/charl/TempPhotoMount/020_All_Photos/Charl_Kerrie_Family/2017'
 
 album_file_path='/home/charl/TempSynoMount/TestAlbumStructure.csv'
 
@@ -140,21 +141,46 @@ def copy_images():
                 shutil.copy2(row['source_file'], target_file)
 
 
-                #Read image width and height using imagemagick into standard output and convert binary to normal string with decode
-                proc=subprocess.Popen(['identify', '-format', '"%w"', target_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                # Read image width and height using imagemagick into standard 
+                # output and convert binary to normal string with decode
+                proc=subprocess.Popen([
+                                        'identify', 
+                                        '-format', 
+                                        '"%w"', 
+                                        target_file
+                                        ],
+                                        stdout=subprocess.PIPE, 
+                                        stderr=subprocess.PIPE
+                                    )
                 outs,errs = proc.communicate()
                 original_width=int(outs.decode().replace('\"', ''))
-                proc=subprocess.Popen(['identify', '-format', '"%h"', target_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                proc=subprocess.Popen([
+                                        'identify', 
+                                        '-format', 
+                                        '"%h"', 
+                                        target_file
+                                        ], 
+                                        stdout=subprocess.PIPE, 
+                                        stderr=subprocess.PIPE
+                                    )
                 outs,errs = proc.communicate()
                 original_height=int(outs.decode().replace('\"', ''))
                 
                 max_img_side=max(original_width, original_height)
                 if max_img_side>SMALL_MAX_ALLOWED_LENGTH:
-                    compression_ratio = str(round(SMALL_MAX_ALLOWED_LENGTH / max_img_side * 100)) + "%"
-                    proc=subprocess.call(['mogrify', '-resize', compression_ratio, target_file])                
+                    compression_ratio = str(round(
+                                                    SMALL_MAX_ALLOWED_LENGTH /
+                                                    max_img_side * 100
+                                                )) + "%"
+                    proc=subprocess.call([
+                                            'mogrify', 
+                                            '-resize', 
+                                            compression_ratio, 
+                                            target_file
+                                        ])                
  
 
-            # ********* Create copies of images in medium  compressed album ******
+            # Create copies of images in medium  compressed album
             target_file=row['target_file_compressed_medium']
             if not os.path.isfile(target_file):
                 print('copying ', target_file)
@@ -240,7 +266,14 @@ def send_to_dropbox():
 
 if __name__ == "__main__":
 
+    t0 = time.time()
+
     create_csv()
     copy_images()
     delete_non_album_files()
     # send_to_dropbox()
+
+    t1 = time.time()
+    print(t1 - t0)
+
+
