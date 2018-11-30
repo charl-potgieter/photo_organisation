@@ -189,8 +189,18 @@ def copy_images():
                 shutil.copy2(row['source_file'], target_file)
 
 
-                #Read image width and height using imagemagick into standard output and convert binary to normal string with decode
-                proc=subprocess.Popen(['identify', '-format', '"%w"', target_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                # Read image width and height using imagemagick into standard 
+                # output and convert binary to normal string with decode
+                proc=subprocess.Popen(
+                                        [
+                                        'identify', 
+                                        '-format', '"%w"', 
+                                        target_file
+                                        ], 
+                                        stdout=subprocess.PIPE, 
+                                        stderr=subprocess.PIPE
+                                     )
+
                 outs,errs = proc.communicate()
                 original_width=int(outs.decode().replace('\"', ''))
                 proc=subprocess.Popen(['identify', '-format', '"%h"', target_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
