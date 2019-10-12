@@ -2,62 +2,33 @@
 #
 #       Organsises photo albums:
 #       (1) Creates csv file of images tagged album_*
-#       (2) Copies these images to album target directory in uncompressed and
+#       (2) Copys these images to album target directory in uncompressed and
 #            compressed forms
 #       (3) Deletes any other files in this directory that aren't the
 #           tagged images
 #
-#       REQUIRES LIBIPTCDATA, RCLONE AND IMAGEMAGICK TO BE INSTALLED ON SYSTEM       
+#       REQUIRES EXIV2, RCLONE AND IMAGEMAGICK TO BE INSTALLED ON SYSTEM       
 #
 ##############################################################################
 
 
-
-
-import os, shutil, subprocess, csv, re, time
-
-
-#------------------------------------------------------------------------------
-#       Folder & file paths
-#------------------------------------------------------------------------------
-
-src_dir='/home/charl/TempSynoMount/TestPhotosOriginal'
-# src_dir='/home/charl/TempPhotoMount/020_All_Photos/Charl_Kerrie_Family/2017'
-
-album_file_path='/home/charl/TempSynoMount/TestAlbumStructure.csv'
-
-target_dir_root='/home/charl/TempSynoMount/TestPhotoAlbums'
-
-target_small_compressed_dir_root=('/home/charl/TempSynoMount/'
-                                   'TestPhotoAlbumsSmall')
-
-target_medium_compressed_dir_root=('/home/charl/TempSynoMount/'
-                                   'TestPhotoAlbumsMedium')
-
-
-#------------------------------------------------------------------------------
-#      Other constants 
-#------------------------------------------------------------------------------
+import os, shutil, subprocess, csv, re
 
 SMALL_MAX_ALLOWED_LENGTH = 1000
 MEDIUM_MAX_ALLOWED_LENGTH = 2048
 
-
-
-
-
-
+src_dir='/srv/samba/Pictures/020_All_Photos'
+album_file_path='/srv/samba/Pictures/0_AlbumStructures/photo_album_details.csv'
+target_dir_root='/srv/samba/Pictures/010_PhotoAlbums'
+target_small_compressed_dir_root='/srv/samba/Pictures/011_PhotoAlbumsCompressedSmall'
+target_medium_compressed_dir_root='/srv/samba/Pictures/012_PhotoAlbumsCompressedMedium'
 
 def create_csv():
     """ creates csv file containing album structure"""
 
     with open(album_file_path, 'w', newline='') as album_file:
         album_writer = csv.writer(album_file)
-        album_writer.writerow([
-                                'source_file', 'album_tag', 'target_file', 
-                                'target_file_compressed_small', 
-                                'target_file_compressed_medium'
-                              ])
+        album_writer.writerow(['source_file', 'album_tag', 'target_file', 'target_file_compressed_small', 'target_file_compressed_medium'])
 
         album_writer=csv.writer(album_file)
 
@@ -65,51 +36,25 @@ def create_csv():
             print('processing ', rootdir, '...')
             for fname in fnames:
 
-                # Read iptc image tag with ptc command line function and pipe
-                # The std output. Use Popen rather than run as can more easily
-                # interact with stdout using Popen.commnuicate as below which 
-                # automatically waits for e child process ot finish before
-                # continuing with the python code
+                #read iptc image tag with exiv2 command line function and pipe the std output
+                #use Popen rather than run as can more easily interact with stdout using Popen.commnuicate as below
+                #which automatically waits for the child process ot finish before continuing with the python code
                 fname_full=os.path.join(rootdir, fname)
-                proc=subprocess.Popen(
-                                     ['iptc', '--print=Keywords', fname_full],
-                                     stdout=subprocess.PIPE, 
-                                     stderr=subprocess.PIPE
-                                    )
+                proc=subprocess.Popen(['exiv2', '-p', 'i', fname_full], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-                # read piped data above into byte/binary variable and convert 
-                # output to a standard string
+                #read piped data above into byte/binary variable and convert output to a standard string
                 outs,errs = proc.communicate()
                 output_str=outs.decode(encoding="utf-8", errors="ignore")
                 
                 #Extract all album tags using regular expression
                 album_tags=re.findall('[^ ]*album_[^ \n]*', output_str)
 
-                #write source file name, tag and target and compressed target 
-                #to csv file
+                #write source file name, tag and target and compressed target to csv file
                 for album_tag in album_tags:
-
-                    target_file = (target_dir_root + os.sep 
-                                + re.sub('^album_[a-zA-Z0-9]*_', '', album_tag)
-                                + os.sep + fname)
-
-                    target_file_compressed_small = target_file.replace(
-                                            target_dir_root,
-                                            target_small_compressed_dir_root
-                                            )
-
-                    target_file_compressed_medium = target_file.replace(
-                                            target_dir_root, 
-                                            target_medium_compressed_dir_root
-                                            )
-
-                    album_writer.writerow([
-                                            fname_full, 
-                                            album_tag, 
-                                            target_file, 
-                                            target_file_compressed_small, 
-                                            target_file_compressed_medium
-                                          ])
+                    target_file = target_dir_root + os.sep + re.sub('^album_[a-zA-Z0-9]*_', '', album_tag) + os.sep + fname
+                    target_file_compressed_small = target_file.replace(target_dir_root, target_small_compressed_dir_root)
+                    target_file_compressed_medium = target_file.replace(target_dir_root, target_medium_compressed_dir_root)
+                    album_writer.writerow([fname_full, album_tag, target_file, target_file_compressed_small, target_file_compressed_medium])
 
 
 def copy_images():
@@ -123,7 +68,7 @@ def copy_images():
 
         for row in album_reader:
 
-            # Create copies of images in uncompressed album
+            # ************Create copies of images in uncompressed album *********
             target_file=row['target_file']
             if not os.path.isfile(target_file):
                 print('copying ', target_file)
@@ -132,7 +77,7 @@ def copy_images():
                 shutil.copy2(row['source_file'], target_file)
 
 
-            # Create copies of images in small compressed album
+            # ********* Create copies of images in small compressed album ******
             target_file=row['target_file_compressed_small']
             if not os.path.isfile(target_file):
                 print('copying ', target_file)
@@ -141,46 +86,21 @@ def copy_images():
                 shutil.copy2(row['source_file'], target_file)
 
 
-                # Read image width and height using imagemagick into standard 
-                # output and convert binary to normal string with decode
-                proc=subprocess.Popen([
-                                        'identify', 
-                                        '-format', 
-                                        '"%w"', 
-                                        target_file
-                                        ],
-                                        stdout=subprocess.PIPE, 
-                                        stderr=subprocess.PIPE
-                                    )
+                #Read image width and height using imagemagick into standard output and convert binary to normal string with decode
+                proc=subprocess.Popen(['identify', '-format', '"%w"', target_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 outs,errs = proc.communicate()
                 original_width=int(outs.decode().replace('\"', ''))
-                proc=subprocess.Popen([
-                                        'identify', 
-                                        '-format', 
-                                        '"%h"', 
-                                        target_file
-                                        ], 
-                                        stdout=subprocess.PIPE, 
-                                        stderr=subprocess.PIPE
-                                    )
+                proc=subprocess.Popen(['identify', '-format', '"%h"', target_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 outs,errs = proc.communicate()
                 original_height=int(outs.decode().replace('\"', ''))
                 
                 max_img_side=max(original_width, original_height)
                 if max_img_side>SMALL_MAX_ALLOWED_LENGTH:
-                    compression_ratio = str(round(
-                                                    SMALL_MAX_ALLOWED_LENGTH /
-                                                    max_img_side * 100
-                                                )) + "%"
-                    proc=subprocess.call([
-                                            'mogrify', 
-                                            '-resize', 
-                                            compression_ratio, 
-                                            target_file
-                                        ])                
+                    compression_ratio = str(round(SMALL_MAX_ALLOWED_LENGTH / max_img_side * 100)) + "%"
+                    proc=subprocess.call(['mogrify', '-resize', compression_ratio, target_file])                
  
 
-            # Create copies of images in medium  compressed album
+            # ********* Create copies of images in medium  compressed album ******
             target_file=row['target_file_compressed_medium']
             if not os.path.isfile(target_file):
                 print('copying ', target_file)
@@ -189,18 +109,8 @@ def copy_images():
                 shutil.copy2(row['source_file'], target_file)
 
 
-                # Read image width and height using imagemagick into standard 
-                # output and convert binary to normal string with decode
-                proc=subprocess.Popen(
-                                        [
-                                        'identify', 
-                                        '-format', '"%w"', 
-                                        target_file
-                                        ], 
-                                        stdout=subprocess.PIPE, 
-                                        stderr=subprocess.PIPE
-                                     )
-
+                #Read image width and height using imagemagick into standard output and convert binary to normal string with decode
+                proc=subprocess.Popen(['identify', '-format', '"%w"', target_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 outs,errs = proc.communicate()
                 original_width=int(outs.decode().replace('\"', ''))
                 proc=subprocess.Popen(['identify', '-format', '"%h"', target_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -276,12 +186,7 @@ def send_to_dropbox():
 
 if __name__ == "__main__":
 
-    t0 = time.time()
-
     create_csv()
-    # copy_images()
-    # delete_non_album_files()
-    # send_to_dropbox()
-
-    t1 = time.time()
-    print(t1 - t0)
+    copy_images()
+    delete_non_album_files()
+  #  send_to_dropbox()
