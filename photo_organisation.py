@@ -279,11 +279,9 @@ if __name__ == "__main__":
     t0 = time.time()
 
     create_csv()
-    copy_images()
-    delete_non_album_files()
+    # copy_images()
+    # delete_non_album_files()
     # send_to_dropbox()
 
     t1 = time.time()
     print(t1 - t0)
-
-
