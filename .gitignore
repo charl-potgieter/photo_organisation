@@ -10,7 +10,8 @@
 *TEST*
 *Test*
 AddInsforGithub/*
-_image_caption_config.py
+_config.py
 Experimentation/*
 __pycache__/*
 .ipynb_checkpoints/*
+album_summary.csv
