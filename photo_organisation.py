@@ -159,7 +159,6 @@ def copy_metadata(input_filepath, output_filepath):
     op = subprocess.run(['exiv2', '-i' '-a', output_filepath], input=ps.stdout)
 
 
-
 def create_csv(in_dir, out_dir, csv_summary_file_path, album_tag_prefix, caption_prefix):
     """ creates csv file containing 'source_file', 'album_tag', 'target_file'and 'caption'"""
 
@@ -180,42 +179,39 @@ def create_csv(in_dir, out_dir, csv_summary_file_path, album_tag_prefix, caption
                             album_writer.writerow([fname_full, album_name, target_file, caption])
 
                             
-def copy_images(csv_summary_file_path):
+def copy_images(csv_summary_file_path, frame_ratio, border_ratio, border_colour, frame_colour, caption_font,
+               font_ratio, font_size_min, font_colour):
     """copy images to create folders based on info in csv_summary_file path containing albums, captioning images if applicable"""
     with open(csv_summary_file_path) as album_file:
         album_reader=csv.DictReader(album_file)
-        for row in album_reader:
-            source_file=row['source_file']
-            target_file=row['target_file']
-            caption=row['caption']
-            target_path=os.path.split(target_file)[0]
+        for image_details in album_reader:
+            target_path=os.path.split(image_details['target_file'])[0]
             os.makedirs(target_path, exist_ok=True)
-            if not os.path.isfile(target_file):
-                print('copying ', target_file)
-                if caption !='' and caption != None:
-                    input_image = get_input_image(source_file)
-                    output_image= generate_captioned_image(input_image=input_image, frame_ratio = inputs['frame_ratio'], 
-                        border_ratio = inputs['border_ratio'], border_colour = inputs['border_colour'], 
-                        frame_colour = inputs['frame_colour'],caption_font = inputs['caption_font'], 
-                        font_ratio = inputs['font_ratio'], font_size_min = inputs['font_size_min'],                                   
-                        font_colour = inputs['font_colour'], caption = caption)
-                    output_image.save(target_file)
-                    copy_metadata(source_file, target_file)
+            if not os.path.isfile(image_details['target_file']):
+                print('copying ', image_details['target_file'])
+                if image_details['caption'] !='' and image_details['caption'] != None:
+                    input_image = get_input_image(image_details['source_file'])
+                    output_image= generate_captioned_image(input_image=input_image, frame_ratio = frame_ratio, 
+                        border_ratio = border_ratio, border_colour = border_colour, frame_colour = frame_colour,
+                        caption_font = caption_font, font_ratio = font_ratio, font_size_min = font_size_min,                                   
+                        font_colour = font_colour, caption = image_details['caption'])
+                    output_image.save(image_details['target_file'])
+                    copy_metadata(image_details['source_file'], image_details['target_file'])
                 else:
-                    shutil.copy2(source_file, target_file)   
+                    shutil.copy2(image_details['source_file'], image_details['target_file'])   
 
                 
-def display_untagged_images_in_target(csv_summary_file_path, in_dir):
+def display_untagged_images_in_target(csv_summary_file_path, out_dir):
     """Displays any files in target directory that are not tagged for album inclusion"""
     
     #Read all target images as per the csv file into a list
     with open(csv_summary_file_path) as album_file:
         album_reader=csv.DictReader(album_file)
-        image_list=[]
-        for row in album_reader:
-            image_list.append(row['target_file'])
+        image_list = []
+        for image_detail in album_reader:
+            image_list.append(image_detail['target_file'])
 
-    for (rootdir, subfolders, fnames) in os.walk(in_dir):
+    for (rootdir, subfolders, fnames) in os.walk(out_dir):
         for fname in fnames:
             fname_path=os.path.join(rootdir, fname)
             if not fname_path in image_list:
@@ -228,7 +224,13 @@ if __name__ == "__main__":
     import os, shutil, subprocess, csv, re
                 
     inputs = read_config_values()
-    create_csv(inputs['in_dir'], inputs['out_dir'], inputs['csv_summary_file_path'], inputs['album_tag_prefix'], inputs['caption_prefix'])
-    copy_images(inputs['csv_summary_file_path'])
-    display_untagged_images_in_target(inputs['csv_summary_file_path'], inputs['in_dir'])
+    create_csv(in_dir = inputs['in_dir'], out_dir = inputs['out_dir'], 
+               csv_summary_file_path= inputs['csv_summary_file_path'], album_tag_prefix =  inputs['album_tag_prefix'], 
+               caption_prefix = inputs['caption_prefix'])
+    copy_images(csv_summary_file_path=inputs['csv_summary_file_path'], frame_ratio=inputs['frame_ratio'], 
+                border_ratio = inputs['border_ratio'], border_colour = inputs['border_colour'], 
+                frame_colour = inputs['frame_colour'], caption_font = inputs['caption_font'],
+                font_ratio = inputs['font_ratio'], font_size_min = inputs['font_size_min'], 
+                font_colour = inputs['font_colour'])
+    display_untagged_images_in_target( csv_summary_file_path =  inputs['csv_summary_file_path'], out_dir = inputs['out_dir'])
     print ('\n' + 'processing complete')
