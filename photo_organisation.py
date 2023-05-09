@@ -74,8 +74,9 @@ def file_is_an_image(filepath):
 def get_input_image(image_file_path):
     """Returns Pillow image at image_file_path and rotates if required"""
     input_image = Image.open(image_file_path)
-    # If orientation is stored via exif metadata then transpose image and remove the orientation metadata
-    input_image = ImageOps.exif_transpose(input_image)
+    # If orientation is stored via exif metadata then transpose image and remove the orientation metadata 
+    # (below does not seem reliable - comment out)
+    # input_image = ImageOps.exif_transpose(input_image)
     return(input_image)
 
 
