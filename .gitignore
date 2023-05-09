@@ -10,7 +10,7 @@
 *TEST*
 *Test*
 AddInsforGithub/*
-*.pynb
+*.ipynb
 _config.py
 Experimentation/*
 __pycache__/*
