@@ -79,8 +79,8 @@ def get_input_image(image_file_path):
     return(input_image)
 
 
-def get_image_title(image_file_path):
-    """Returns the XMP description of image at image_file_path (XMP description shows as 'title' in Windows Explorer)"""
+def get_xmp_description(image_file_path):
+    """Returns the XMP description of image at image_file_path"""
     result = subprocess.run(['exiv2', '-g', 'Xmp.dc.description', '-Pv', image_file_path], stdout=subprocess.PIPE)
     title = result.stdout.decode(encoding="utf-8").strip()
     # remove text similiar to this 'lang="<something>"' that occurs at start of the string
@@ -90,7 +90,7 @@ def get_image_title(image_file_path):
 
 def get_image_caption(image_file_path, caption_prefix):
     """returns image caption, where caption  = XMP description if it starts caption_prefix"""
-    image_title = get_image_title(image_file_path)
+    image_title = get_xmp_description(image_file_path)
     if text_starts_with_prefix(image_title, caption_prefix):
         return(text_ex_prefix(image_title, caption_prefix))
     else:
