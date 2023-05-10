@@ -155,9 +155,15 @@ def generate_captioned_image(input_image, frame_ratio, border_ratio, border_colo
 
 def copy_metadata(input_filepath, output_filepath):
     """copies image metadata from infile to outfile"""
+    
+    # Pipes original metadata to stdout and then imports from stdout in new image
     ps = subprocess.run(['exiv2', '-e', '-a', input_filepath], check=True, capture_output=True)
     op = subprocess.run(['exiv2', '-i' '-a', output_filepath], input=ps.stdout)
 
+    # Set orientation as 1 (which means no rotation required) ar orientation is fixed in funciton get_input_image
+    # and metadata copied from original file may be icorrect
+    subprocess.run(['exiv2', '-M' 'set Exif.Image.Orientation 1', output_filepath])
+    
 
 def create_csv(in_dir, out_dir, csv_summary_file_path, album_tag_prefix, caption_prefix):
     """ creates csv file containing 'source_file', 'album_tag', 'target_file'and 'caption'"""
