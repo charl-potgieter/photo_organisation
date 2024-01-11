@@ -2,7 +2,7 @@
 #
 #       Organsises photo albums:
 #       (1) Creates csv file of images tagged album_*
-#       (2) Copys these images to album target directory (will overwrite 
+#       (2) Copys these images to album target directory (will overwrite
 #           any existing images
 #
 #       REQUIRES EXIV2, PYTHON 3.5+
@@ -13,22 +13,22 @@
 
 def read_config_values():
     """Reads values from the configuration files and returns dictionary"""
-    
+
     if config_file_exists():
         import config
     else:
-        raise ValueError ('Missing file config.py, please refer to documentation') 
-    
+        raise ValueError ('Missing file config.py, please refer to documentation')
+
     # Values in a hidden config file override the config file, useful to prevent user config settings being pushed to github
     if hidden_config_file_exists():
         import _config
         if config.config.keys() != _config.config.keys():
-            raise ValueError ('keys in config files dont match hidden config file') 
+            raise ValueError ('keys in config files dont match hidden config file')
         else:
             config_values = _config.config
     else:
         config_values = config.config
-    
+
     return (config_values)
 
 
@@ -45,8 +45,8 @@ def hidden_config_file_exists():
 def in_dir_exists(in_dir):
     """Check if in_dir directory exists"""
     return(os.path.isdir(in_dir))
-            
-            
+
+
 def dir_exists(dir):
     """Check if out_dir directory exists"""
     return(os.path.isdir(dir))
@@ -56,7 +56,7 @@ def create_dir_and_parents(dir):
     """Create out_dir"""
     pathlib.Path(dir).mkdir(parents=True)
 
-    
+
 def dir_is_empty(dir):
     """Returns true if dir is empty otherwise false"""
     return (len(os.listdir(dir)) == 0)
@@ -74,7 +74,7 @@ def file_is_an_image(filepath):
 def get_input_image(image_file_path):
     """Returns Pillow image at image_file_path and rotates if required"""
     input_image = Image.open(image_file_path)
-    # If orientation is stored via exif metadata then transpose image and remove the orientation metadata 
+    # If orientation is stored via exif metadata then transpose image and remove the orientation metadata
     input_image = ImageOps.exif_transpose(input_image)
     return(input_image)
 
@@ -116,16 +116,16 @@ def text_starts_with_prefix(text_to_check, prefix):
     else:
         return (False)
 
-    
+
 def text_ex_prefix(input_text, prefix):
-    """Returns input_text excluding prefix, stripped of leading and trailing spaces"""    
+    """Returns input_text excluding prefix, stripped of leading and trailing spaces"""
     return(input_text[-len(input_text) + len(prefix):].strip())
 
 
 def generate_captioned_image(input_image, frame_ratio, border_ratio, border_colour, frame_colour,
                              caption_font, font_ratio, font_size_min, font_colour, caption):
     """ Adds frame, border and text caption to Pillow image img"""
-    
+
     # Get / calculate dimensions
     original_image_width = input_image.size[0]
     original_image_height = input_image.size[1]
@@ -137,25 +137,25 @@ def generate_captioned_image(input_image, frame_ratio, border_ratio, border_colo
     frame_width = border_width + frame_thickness * 2
     frame_height = border_height + frame_thickness * 2
     font_size = max(font_size_min,  round(max_original_image_side_length * font_ratio))
-    
+
     # Paste original image inside border, then inside frame
     bordered_image = Image.new('RGB', (border_width, border_height), border_colour)
     bordered_image.paste(input_image, (border_thickness, border_thickness))
     framed_image = Image.new('RGB', (frame_width, frame_height), frame_colour)
     framed_image.paste(bordered_image, (frame_thickness, frame_thickness))
-    
+
     # Add text to the framed image
     text_x = round(frame_width/2)
     text_y = round(frame_height - frame_thickness - border_thickness/2)
     caption_font = ImageFont.truetype(caption_font, font_size)
     ImageDraw.Draw(framed_image).text(xy=(text_x,text_y), text=caption, font=caption_font, fill=font_colour, anchor='mm')
-    
+
     return(framed_image)
 
 
 def copy_metadata(input_filepath, output_filepath):
     """copies image metadata from infile to outfile"""
-    
+
     # Pipes original metadata to stdout and then imports from stdout in new image
     ps = subprocess.run(['exiv2', '-e', '-a', input_filepath], check=True, capture_output=True)
     op = subprocess.run(['exiv2', '-i' '-a', output_filepath], input=ps.stdout)
@@ -163,7 +163,7 @@ def copy_metadata(input_filepath, output_filepath):
     # Set orientation as 1 (which means no rotation required) as orientation is fixed in function get_input_image
     # and metadata copied from original file may be incorrect
     subprocess.run(['exiv2', '-M' 'set Exif.Image.Orientation 1', output_filepath])
-    
+
 
 def create_csv(in_dir, out_dir, csv_summary_file_path, album_tag_prefix, caption_prefix):
     """ creates csv file containing 'source_file', 'album_tag', 'target_file'and 'caption'"""
@@ -176,7 +176,7 @@ def create_csv(in_dir, out_dir, csv_summary_file_path, album_tag_prefix, caption
             for fname in fnames:
                 if file_is_an_image(fname):
                     fname_full=os.path.join(rootdir, fname)
-                    caption = get_image_caption(fname_full, caption_prefix)                  
+                    caption = get_image_caption(fname_full, caption_prefix)
                     keywords = get_itpc_keywords (fname_full)
                     for keyword in keywords:
                         if text_starts_with_prefix(keyword, album_tag_prefix):
@@ -184,7 +184,7 @@ def create_csv(in_dir, out_dir, csv_summary_file_path, album_tag_prefix, caption
                             target_file = out_dir + os.sep + album_name + os.sep + fname
                             album_writer.writerow([fname_full, album_name, target_file, caption])
 
-                            
+
 def copy_images(csv_summary_file_path, frame_ratio, border_ratio, border_colour, frame_colour, caption_font,
                font_ratio, font_size_min, font_colour):
     """copy images to create folders based on info in csv_summary_file path containing albums, captioning images if applicable"""
@@ -197,19 +197,19 @@ def copy_images(csv_summary_file_path, frame_ratio, border_ratio, border_colour,
                 print('copying ', image_details['target_file'])
                 if image_details['caption'] !='' and image_details['caption'] != None:
                     input_image = get_input_image(image_details['source_file'])
-                    output_image= generate_captioned_image(input_image=input_image, frame_ratio = frame_ratio, 
+                    output_image= generate_captioned_image(input_image=input_image, frame_ratio = frame_ratio,
                         border_ratio = border_ratio, border_colour = border_colour, frame_colour = frame_colour,
-                        caption_font = caption_font, font_ratio = font_ratio, font_size_min = font_size_min,                                   
+                        caption_font = caption_font, font_ratio = font_ratio, font_size_min = font_size_min,
                         font_colour = font_colour, caption = image_details['caption'])
                     output_image.save(image_details['target_file'])
                     copy_metadata(image_details['source_file'], image_details['target_file'])
                 else:
-                    shutil.copy2(image_details['source_file'], image_details['target_file'])   
+                    shutil.copy2(image_details['source_file'], image_details['target_file'])
 
-                
+
 def display_untagged_images_in_target(csv_summary_file_path, out_dir):
     """Displays any files in target directory that are not tagged for album inclusion"""
-    
+
     #Read all target images as per the csv file into a list
     with open(csv_summary_file_path) as album_file:
         album_reader=csv.DictReader(album_file)
@@ -228,15 +228,16 @@ if __name__ == "__main__":
 
     from PIL import Image, ImageDraw, ImageFont, ImageOps
     import os, shutil, subprocess, csv, re
-                
+    import pathlib
+
     inputs = read_config_values()
-    create_csv(in_dir = inputs['in_dir'], out_dir = inputs['out_dir'], 
-               csv_summary_file_path= inputs['csv_summary_file_path'], album_tag_prefix =  inputs['album_tag_prefix'], 
+    create_csv(in_dir = inputs['in_dir'], out_dir = inputs['out_dir'],
+               csv_summary_file_path= inputs['csv_summary_file_path'], album_tag_prefix =  inputs['album_tag_prefix'],
                caption_prefix = inputs['caption_prefix'])
-    copy_images(csv_summary_file_path=inputs['csv_summary_file_path'], frame_ratio=inputs['frame_ratio'], 
-                border_ratio = inputs['border_ratio'], border_colour = inputs['border_colour'], 
+    copy_images(csv_summary_file_path=inputs['csv_summary_file_path'], frame_ratio=inputs['frame_ratio'],
+                border_ratio = inputs['border_ratio'], border_colour = inputs['border_colour'],
                 frame_colour = inputs['frame_colour'], caption_font = inputs['caption_font'],
-                font_ratio = inputs['font_ratio'], font_size_min = inputs['font_size_min'], 
+                font_ratio = inputs['font_ratio'], font_size_min = inputs['font_size_min'],
                 font_colour = inputs['font_colour'])
     display_untagged_images_in_target( csv_summary_file_path =  inputs['csv_summary_file_path'], out_dir = inputs['out_dir'])
     print ('\n' + 'processing complete')
